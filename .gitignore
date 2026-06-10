@@ -1,0 +1,23 @@
+# OS
+.DS_Store
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+.metals/
+
+# Scala
+.bsp/
+.bloop/
+target/
+project/target/
+project/project/
+
+# Sbt
+dist/
+target/
+
+# Misc
+*.log
+*.swp
