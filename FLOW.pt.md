@@ -1,36 +1,36 @@
-# Class interaction flow — scala-akka-aws-microservice
+# Fluxo de interação entre classes — scala-akka-aws-microservice
 
-Quick visualization of how an HTTP request travels through the system down to the storage backend (DynamoDB or in-memory).
+Visualização rápida de como uma requisição HTTP atravessa o sistema até o storage backend (DynamoDB ou in-memory).
 
 ## 1. Bootstrap
 
 ```
 Main.main()
-  ├─> reads envs: PORT, STORAGE_BACKEND, DYNAMODB_TABLE, AWS_REGION
+  ├─> lê envs: PORT, STORAGE_BACKEND, DYNAMODB_TABLE, AWS_REGION
   ├─> ActorSystem(Behaviors.empty, "akka-aws-microservice")
-  ├─> creates OrderStore:
+  ├─> cria OrderStore:
   │     ├─ "dynamodb"  ──> DynamoOrderStore(DynamoDbAsyncClient, tableName)
-  │     └─ default     ──> InMemoryOrderStore (with seed)
-  ├─> creates OrderRepository(store)
-  ├─> creates OrderRoutes(repo)
+  │     └─ default     ──> InMemoryOrderStore (com seed)
+  ├─> cria OrderRepository(store)
+  ├─> cria OrderRoutes(repo)
   └─> Http().newServerAt(0.0.0.0, port).bind(routes)
 ```
 
 ## 2. Health — `GET /health`
 
 ```
-HTTP client
+Cliente HTTP
   └─> OrderRoutes.path("health")        [api/OrderRoutes]
         └─> complete(200, "ok")
 ```
 
-**Summary path:**
-`OrderRoutes (static response)`
+**Caminho resumido:**
+`OrderRoutes (resposta estática)`
 
-## 3. Create order — `POST /orders`
+## 3. Criar pedido — `POST /orders`
 
 ```
-HTTP client (curl)
+Cliente HTTP (curl)
   └─> OrderRoutes.post()                [api/OrderRoutes]
         └─> OrderRepository.create()    [persistence/OrderRepository]
               └─> OrderStore.create()   [store/OrderStore]
@@ -38,13 +38,13 @@ HTTP client (curl)
                     └─ DynamoOrderStore:  DynamoDbAsyncClient.putItem  ──> DynamoDB
 ```
 
-**Summary path:**
+**Caminho resumido:**
 `OrderRoutes → OrderRepository → OrderStore (InMemory | Dynamo) → (Map | DynamoDB)`
 
-## 4. Get order — `GET /orders/:id`
+## 4. Buscar pedido — `GET /orders/:id`
 
 ```
-HTTP client
+Cliente HTTP
   └─> OrderRoutes.get()                 [api/OrderRoutes]
         └─> OrderRepository.get()       [persistence/OrderRepository]
               └─> OrderStore.get()      [store/OrderStore]
@@ -52,10 +52,10 @@ HTTP client
                     └─ DynamoOrderStore:  DynamoDbAsyncClient.getItem  ──> DynamoDB
 ```
 
-## 5. List orders — `GET /orders`
+## 5. Listar pedidos — `GET /orders`
 
 ```
-HTTP client
+Cliente HTTP
   └─> OrderRoutes.get(list)             [api/OrderRoutes]
         └─> OrderRepository.list(50)    [persistence/OrderRepository]
               └─> OrderStore.list()     [store/OrderStore]
@@ -63,10 +63,10 @@ HTTP client
                     └─ DynamoOrderStore:  DynamoDbAsyncClient.scan    ──> DynamoDB
 ```
 
-## 6. Change status — `PUT /orders/:id`
+## 6. Mudar status — `PUT /orders/:id`
 
 ```
-HTTP client
+Cliente HTTP
   └─> OrderRoutes.put()                 [api/OrderRoutes]
         └─> OrderRepository.changeStatus()  [persistence/OrderRepository]
               └─> OrderStore.update()   [store/OrderStore]
@@ -74,7 +74,7 @@ HTTP client
                     └─ DynamoOrderStore:  DynamoDbAsyncClient.updateItem ──> DynamoDB
 ```
 
-## 7. Typed responses (sealed ADT)
+## 7. Respostas tipadas (sealed ADT)
 
 ```
 OrderRepository ──> OrderResponse (sealed trait)
@@ -83,34 +83,34 @@ OrderRepository ──> OrderResponse (sealed trait)
                        └── OrderRejected(reason)    ──> 400
 ```
 
-`OrderRoutes` does a `match` on `OrderResponse` and returns the correct HTTP status via `onSuccess`.
+`OrderRoutes` faz `match` em `OrderResponse` e devolve o HTTP status correto via `onSuccess`.
 
-## Package map
+## Mapa de pacotes
 
 ```
 com.codesolutions.akka.aws
-├── Main.scala                          ← entry point (chooses backend)
+├── Main.scala                          ← entry point (escolhe backend)
 ├── domain/
 │   └── Order.scala                     ← case class
 ├── persistence/
 │   └── OrderRepository.scala           ← OrderRepository(store) + OrderResponse ADT
 ├── store/
 │   ├── OrderStore.scala                ← trait
-│   ├── InMemoryOrderStore.scala        ← local impl (Map + seed)
-│   └── DynamoOrderStore.scala          ← prod impl (AWS SDK v2 async)
+│   ├── InMemoryOrderStore.scala        ← impl local (Map + seed)
+│   └── DynamoOrderStore.scala          ← impl prod (AWS SDK v2 async)
 └── api/
     └── OrderRoutes.scala               ← Akka HTTP routes + JSON protocols
 ```
 
-## Errors
+## Erros
 
-`OrderRoutes` maps the sealed ADT `OrderResponse` to HTTP status (`OrderFound → 200/201`, `OrderNotFound → 404`, `OrderRejected → 400`). Malformed JSON returns 400 via `Spray-JSON` `deserializationError`.
+`OrderRoutes` mapeia o sealed ADT `OrderResponse` para HTTP status (`OrderFound → 200/201`, `OrderNotFound → 404`, `OrderRejected → 400`). JSON malformado retorna 400 via `Spray-JSON` `deserializationError`.
 
 ## Deploy
 
 ```
-Client ──> ALB (port 443) ──> Fargate task (Akka HTTP :8080) ──> DynamoDB
+Cliente ──> ALB (port 443) ──> Fargate task (Akka HTTP :8080) ──> DynamoDB
                                                               └─> CloudWatch (logs/alarms)
 ```
 
-CD (`.github/workflows/cd.yml`): `sbt-assembly` → Docker multi-stage → push ECR → render task-definition → rolling deploy via `amazon-ecs-deploy-task-definition`. AWS credentials via OIDC (no long-lived keys).
+CD (`.github/workflows/cd.yml`): `sbt-assembly` → Docker multi-stage → push ECR → render task-definition → rolling deploy via `amazon-ecs-deploy-task-definition`. Credenciais AWS via OIDC (sem long-lived keys).
