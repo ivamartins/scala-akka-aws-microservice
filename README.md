@@ -4,9 +4,9 @@ Production-ready **Scala + Akka HTTP** microservice deployable to **AWS Fargate*
 
 ## Why this project?
 
-Built to showcase the **Senior Software Engineer (Caterpillar)** JD requirements end-to-end:
+Built to showcase an end-to-end Scala/Akka on AWS stack:
 
-| JD requirement | Where |
+| Topic | Where |
 |---|---|
 | 5+ years Java 17+ / Scala 2+ | entire codebase (Scala 2.13) |
 | 2+ years Scala + Akka (Streams, Actors, HTTP, Persistence) | `api/OrderRoutes`, `Main` |
@@ -166,5 +166,5 @@ curl -X PUT https://<alb>/orders/o-1 \
 ## See also
 
 - `akka-scala-base` — the pure-Scala base that inspired the persistence + HTTP layer
-- `flink-data-mesh-pipeline` — streaming counterpart (Data Engineer role)
-- `dbt-airflow-data-platform` — batch counterpart (Data Engineer role)
+- `flink-data-mesh-pipeline` — streaming counterpart
+- `dbt-airflow-data-platform` — batch counterpart
