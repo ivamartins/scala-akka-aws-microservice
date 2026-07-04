@@ -1,5 +1,8 @@
 # scala-akka-aws-microservice
 
+[![CI](https://github.com/ivamartins/scala-akka-aws-microservice/actions/workflows/ci.yml/badge.svg)](https://github.com/ivamartins/scala-akka-aws-microservice/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 > Part of the **Code Solutions Event-Driven & Streaming Toolkit** product line. Reference Akka + AWS deployment with Fargate, Terraform, and ECR.
 
 Scala + Akka Typed microservice reference, with end-to-end **AWS deployment** via Terraform (Fargate + ECR + ALB).
